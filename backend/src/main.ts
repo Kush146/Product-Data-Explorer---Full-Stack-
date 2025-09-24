@@ -7,30 +7,51 @@ import rateLimit from 'express-rate-limit';
 async function bootstrap() {
   const app = await NestFactory.create(AppModule, { cors: false });
 
-  // Security
-  app.use(helmet({
-    crossOriginResourcePolicy: { policy: 'cross-origin' },
-  }));
+  // Security headers
   app.use(
-    rateLimit({
-      windowMs: 60 * 1000,       // 1 minute
-      limit: 180,                // 180 req/min total per IP
-      standardHeaders: true,
-      legacyHeaders: false,
-    })
+    helmet({
+      crossOriginResourcePolicy: { policy: 'cross-origin' },
+    }),
   );
 
-  // single API prefix
+  // Rate limiting
+  app.use(
+    rateLimit({
+      windowMs: 60 * 1000, // 1 minute
+      limit: 180, // 180 req/min/IP
+      standardHeaders: true,
+      legacyHeaders: false,
+    }),
+  );
+
+  // Global prefix
   app.setGlobalPrefix('api/v1');
 
-  // CORS for the Next dev/prod
+  // ✅ CORS config
+  const allowedOrigins = [
+    /^http:\/\/localhost:\d+$/, // local dev
+    'https://product-eight-neon.vercel.app', // production
+    /\.vercel\.app$/, // preview deploys
+  ];
+
   app.enableCors({
-    origin: [/^http:\/\/localhost:\d+$/, /^https?:\/\/.*vercel\.app$/],
-    methods: ['GET','POST','PUT','PATCH','DELETE','OPTIONS'],
+    origin: (origin, callback) => {
+      if (!origin) return callback(null, true); // allow server-to-server / curl
+      if (
+        allowedOrigins.some((o) =>
+          o instanceof RegExp ? o.test(origin) : o === origin,
+        )
+      ) {
+        return callback(null, true);
+      }
+      return callback(new Error(`CORS blocked: ${origin}`), false);
+    },
+    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization'],
-    credentials: false,
+    credentials: true,
   });
 
+  // Swagger
   const config = new DocumentBuilder()
     .setTitle('Product Data Explorer API')
     .setVersion('1.0')
@@ -38,8 +59,9 @@ async function bootstrap() {
   const document = SwaggerModule.createDocument(app, config);
   SwaggerModule.setup('docs', app, document);
 
+  // Start
   await app.listen(process.env.PORT ?? 4000);
-  console.log('API on http://localhost:4000');
-  console.log('Swagger on http://localhost:4000/docs');
+  console.log('API running on http://localhost:4000');
+  console.log('Swagger docs at http://localhost:4000/docs');
 }
 bootstrap();
