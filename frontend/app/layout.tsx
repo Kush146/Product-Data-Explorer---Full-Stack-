@@ -1,11 +1,12 @@
-import "./globals.css";
-import Providers from "./providers";
-import Link from "next/link";
-import HistoryListener from "./history-listener";
+import './globals.css';
+import Providers from './providers';
+import Link from 'next/link';
+import { Suspense } from 'react';
+import HistoryListener from './history-listener';
 
 export const metadata = {
-  title: "Product Data Explorer",
-  description: "Explore products from World of Books",
+  title: 'Product Data Explorer',
+  description: 'Explore products from World of Books',
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
@@ -43,7 +44,10 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             </div>
           </header>
 
-          <HistoryListener />
+          {/* Wrap client navigation hooks behind Suspense */}
+          <Suspense fallback={null}>
+            <HistoryListener />
+          </Suspense>
 
           {/* Main Content */}
           <main id="main" tabIndex={-1} className="mx-auto max-w-7xl px-6 py-8">
@@ -55,7 +59,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             <div className="mx-auto max-w-7xl px-6 py-6 text-sm text-gray-600 flex justify-between">
               <p>© {new Date().getFullYear()} Product Data Explorer</p>
               <p>
-                Built with <span className="text-green-700 font-semibold">Next.js</span> &{" "}
+                Built with <span className="text-green-700 font-semibold">Next.js</span> &{' '}
                 <span className="text-green-700 font-semibold">NestJS</span>
               </p>
             </div>
