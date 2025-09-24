@@ -1,10 +1,10 @@
-"use client";
-import { useEffect } from "react";
-import { usePathname, useSearchParams } from "next/navigation";
-import { api } from "@/lib/api";
+'use client';
+import { useEffect } from 'react';
+import { usePathname, useSearchParams } from 'next/navigation';
+import { api } from '@/lib/api';
 
 function sid(): string {
-  const k = "pde.sid";
+  const k = 'pde.sid';
   let v = localStorage.getItem(k);
   if (!v) {
     v = crypto.randomUUID();
@@ -20,9 +20,9 @@ export default function HistoryListener() {
   useEffect(() => {
     const s = sid();
     const pathJson = { path: pathname, query: Object.fromEntries(sp.entries()) };
-    console.log("[history] POST", pathJson); // <-- visible in Console
+    // console.log('[history] POST', pathJson);
     api.postHistory({ sessionId: s, pathJson }).catch((e) => {
-      console.warn("[history] post failed", e);
+      console.warn('[history] post failed', e);
     });
   }, [pathname, sp]);
 

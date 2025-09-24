@@ -4,7 +4,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useParams, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { api, Breadcrumb, Category, Product } from "@/lib/api";
+import { api, API_BASE_URL, Breadcrumb, Category, Product } from "@/lib/api";
 import GridSkeleton from "@/components/GridSkeleton";
 import StatusToast from "@/components/StatusToast";
 import { timeAgo } from "@/lib/time";
@@ -41,6 +41,7 @@ export default function BrowsePage() {
   }>({
     queryKey: ["children", nav, slug.join("/")],
     queryFn: () => api.getCategoryChildren({ nav, slug }),
+    retry: 1,
   });
 
   // products
@@ -53,6 +54,7 @@ export default function BrowsePage() {
     queryKey: ["products", nav, slug.join("/"), page, PAGE_SIZE],
     queryFn: () => api.getProducts({ nav, slug, page, limit: PAGE_SIZE }),
     placeholderData: (prev) => prev,
+    retry: 1,
   });
 
   const meta = childrenData?.meta;
@@ -84,18 +86,17 @@ export default function BrowsePage() {
     };
   }, [meta?.enqueued, meta?.isStale, refetchChildren, refetchProducts]);
 
-  // refresh action
+  // refresh action (queues a new scrape on the API)
   const onRefresh = async () => {
     try {
-      const API_BASE =
-        process.env.NEXT_PUBLIC_API_BASE || "http://localhost:4000/api/v1";
       const categoryPath = [nav, ...slug].filter(Boolean).join("/");
       const url =
-        `${API_BASE}/navigation/children?` +
+        `${API_BASE_URL}/navigation/children?` +
         new URLSearchParams({
           categoryPath,
           refresh: "true",
         }).toString();
+
       await fetch(url, { cache: "no-store" });
     } catch {
       // ignore; just show toast and let polling pick it up
@@ -126,10 +127,7 @@ export default function BrowsePage() {
           <span key={b.id}>
             <span className="mx-2">›</span>
             {b.isNav ? (
-              <Link
-                href={`/${b.slug}`}
-                className="text-blue-600 hover:underline"
-              >
+              <Link href={`/${b.slug}`} className="text-blue-600 hover:underline">
                 {b.title}
               </Link>
             ) : (
@@ -216,37 +214,30 @@ export default function BrowsePage() {
               <section className="mt-4">
                 <h2 className="sr-only">Products</h2>
                 {productsFetching && hasProducts ? (
-                  <p className="text-sm text-gray-500 mb-2">Updating…</p>
+                  <p className="mb-2 text-sm text-gray-500">Updating…</p>
                 ) : null}
 
                 {hasProducts ? (
                   <>
-                    <ul className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                    <ul className="grid grid-cols-2 gap-4 md:grid-cols-4">
                       {productsData!.items.map((p) => (
-                        <li
-                          key={p.id}
-                          className="border rounded p-3 hover:shadow"
-                        >
+                        <li key={p.id} className="rounded border p-3 hover:shadow">
                           {/* eslint-disable-next-line @next/next/no-img-element */}
                           <img
                             src={p.imageUrl || "/placeholder.png"}
                             alt={p.title}
-                            className="w-full h-48 object-contain"
+                            className="h-48 w-full object-contain"
                           />
-                          <div className="mt-2 font-medium line-clamp-2">
-                            {p.title}
-                          </div>
+                          <div className="mt-2 line-clamp-2 font-medium">{p.title}</div>
                           {p.author ? (
-                            <div className="text-sm text-gray-600">
-                              {p.author}
-                            </div>
+                            <div className="text-sm text-gray-600">{p.author}</div>
                           ) : null}
-                          <div className="text-sm font-semibold mt-1">
+                          <div className="mt-1 text-sm font-semibold">
                             {(p.currency || "")} {p.price ?? ""}
                           </div>
                           <Link
                             href={`/product/${p.id}`}
-                            className="mt-2 inline-block text-blue-600 hover:underline text-sm"
+                            className="mt-2 inline-block text-sm text-blue-600 hover:underline"
                           >
                             View details
                           </Link>
@@ -292,7 +283,7 @@ function Pager({
   return (
     <div className="flex items-center gap-2">
       <Link
-        className={`px-2 py-1 border rounded ${
+        className={`rounded border px-2 py-1 ${
           current <= 1 ? "pointer-events-none opacity-50" : ""
         }`}
         href={make(Math.max(1, current - 1))}
@@ -303,7 +294,7 @@ function Pager({
         {current} / {pages}
       </span>
       <Link
-        className={`px-2 py-1 border rounded ${
+        className={`rounded border px-2 py-1 ${
           current >= pages ? "pointer-events-none opacity-50" : ""
         }`}
         href={make(Math.min(pages, current + 1))}
