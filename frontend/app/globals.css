@@ -1,0 +1,26 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root { color-scheme: light; }
+body { @apply bg-white text-[17px] text-wob-ink; }
+a:focus { outline: 2px solid #2563eb; outline-offset: 2px; }
+
+@layer components {
+  .btn {
+    @apply inline-flex items-center justify-center rounded-md px-4 py-2 font-semibold shadow-sm;
+  }
+  .btn-cta {
+    @apply btn bg-wob-yellow text-wob-ink hover:brightness-95;
+  }
+  .btn-green {
+    @apply btn bg-wob-green text-white hover:bg-wob-green2;
+  }
+  .pill {
+    @apply inline-flex items-center gap-2 rounded-full border px-4 py-2 text-sm hover:bg-gray-50;
+  }
+  .card {
+    @apply rounded-xl2 border bg-white shadow-card;
+  }
+}
+ 

@@ -1,0 +1,99 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model Navigation {
+  id            String    @id @default(cuid())
+  title         String
+  slug          String    @unique
+  lastScrapedAt DateTime?
+  categories    Category[]
+}
+
+model Category {
+  id            String     @id @default(cuid())
+  navigationId  String
+  parentId      String?    
+  title         String
+  slug          String
+  sourceUrl     String?    @unique
+  productCount  Int        @default(0)
+  lastScrapedAt DateTime?
+
+  navigation    Navigation @relation(fields: [navigationId], references: [id])
+
+  
+  parent        Category?  @relation("CategoryToCategory", fields: [parentId], references: [id], onDelete: SetNull)
+  children      Category[] @relation("CategoryToCategory")
+
+  products      Product[]
+
+
+  @@unique([navigationId, slug, parentId], map: "navigationId_slug_parentId")
+}
+
+
+model Product {
+  id            String    @id @default(cuid())
+  sourceId      String
+  title         String
+  author        String?
+  price         Decimal?  @db.Decimal(10, 2)
+
+  currency      String?   @default("GBP")
+  imageUrl      String?
+  sourceUrl     String
+  lastScrapedAt DateTime?
+  categoryId    String?
+  category      Category? @relation(fields: [categoryId], references: [id])
+  detail        ProductDetail?
+  reviews       Review[]
+
+  @@unique([sourceId])
+  @@unique([sourceUrl])
+}
+
+model ProductDetail {
+  productId    String   @id
+  description  String?
+  specs        Json?
+  ratingsAvg   Float?   @default(0)
+  reviewsCount Int?     @default(0)
+  product      Product  @relation(fields: [productId], references: [id])
+}
+
+model Review {
+  id        String   @id @default(cuid())
+  productId String
+  author    String?
+  rating    Float?
+  text      String?
+  createdAt DateTime @default(now())
+  product   Product  @relation(fields: [productId], references: [id])
+}
+
+model ViewHistory {
+  id        String   @id @default(cuid())
+  userId    String?
+  sessionId String
+  pathJson  Json
+  createdAt DateTime @default(now())
+}
+
+model ScrapeJob {
+  id         String   @id @default(cuid())
+  targetUrl  String
+  targetType String
+  status     String   @default("queued") // queued|running|succeeded|failed|skipped
+  startedAt  DateTime?
+  finishedAt DateTime?
+  errorLog   String?
+  dedupeKey  String   @unique
+}
+
+

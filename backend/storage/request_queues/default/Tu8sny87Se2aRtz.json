@@ -1,0 +1,9 @@
+{
+	"id": "Tu8sny87Se2aRtz",
+	"json": "{\"id\":\"Tu8sny87Se2aRtz\",\"url\":\"https://www.worldofbooks.com/action--adventure#MainContent\",\"loadedUrl\":\"https://www.worldofbooks.com/action--adventure#MainContent\",\"uniqueKey\":\"https://www.worldofbooks.com/action--adventure\",\"method\":\"GET\",\"noRetry\":false,\"retryCount\":0,\"errorMessages\":[],\"headers\":{},\"userData\":{\"__crawlee\":{\"state\":4}},\"handledAt\":\"2025-09-23T18:57:26.133Z\"}",
+	"method": "GET",
+	"orderNo": null,
+	"retryCount": 0,
+	"uniqueKey": "https://www.worldofbooks.com/action--adventure",
+	"url": "https://www.worldofbooks.com/action--adventure#MainContent"
+}
